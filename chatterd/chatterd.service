@@ -1,0 +1,28 @@
+[Unit]
+Description=EECS Reactive chatterd
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Restart=on-failure
+RestartSec=1
+User=root
+Group=www-data
+WorkingDirectory=/home/ubuntu/reactive/chatterd
+
+# >>>>>>>>>>>>>>>>> Go or Rust: uncomment the following line: <<<<<<<<<<<<<<<<<
+ExecStart=/home/ubuntu/reactive/chatterd/chatterd
+
+# >>>>>>>>>>>>>>>>> TypeScript: uncomment the following two lines: <<<<<<<<<<<<<<<<<
+#Environment=NODE_ENV=production
+#ExecStart=/usr/local/bin/pm2-runtime start  -i 3 main.js
+# >>> Sometimes pm2-runtime is installed in /usr/bin. Double check your path with:
+# >>> server$ which pm2-runtime
+# >>> and use the output in the ExecStart above.
+
+# >>>>>>>>>>>>>>>>>>> Python: uncomment the following line: <<<<<<<<<<<<<<<<<<<
+#ExecStart=/home/ubuntu/reactive/chatterd/.venv/bin/granian --host 0.0.0.0 --port 443 --interface asgi --ssl-certificate /home/ubuntu/reactive/chatterd.crt --ssl-keyfile /home/ubuntu/reactive/chatterd.key --access-log --respawn-failed-workers --respawn-interval 1.0 --workers 3 --workers-kill-timeout 1 main:server
+
+[Install]
+WantedBy=multi-user.target
