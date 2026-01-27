@@ -14,7 +14,7 @@ type Route struct {
 }
 
 var routes = []Route {
-		{"GET", "/", top},	
+		// {"GET", "/", top},	
 		{"POST", "/llmprompt/", llmprompt},
 }
 
