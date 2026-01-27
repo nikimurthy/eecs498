@@ -12,7 +12,7 @@ final class ChattStore {
 
     private(set) var chatts = [Chatt]()
 
-    private let serverUrl = "https://mada.eecs.umich.edu"
+    private let serverUrl = "https://3.129.24.48"
   
     // networking methods
     func llmPrompt(_ chatt: Chatt, errMsg: Binding<String>) async {
