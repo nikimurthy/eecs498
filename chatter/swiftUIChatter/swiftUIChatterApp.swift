@@ -9,7 +9,7 @@ import SwiftUI
 
 @Observable
 final class ChattViewModel {
-    let onTrailingEnd = "gemma3:270m"
+    let onTrailingEnd = "nikivm"
 
     let instruction = "Type a message…"
     var message = "howdy?"

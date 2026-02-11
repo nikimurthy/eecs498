@@ -1,4 +1,6 @@
 import SwiftUI
+import Synchronization
+
 
 struct OllamaReply: Decodable {
     let model: String
@@ -12,77 +14,93 @@ final class ChattStore {
 
     private(set) var chatts = [Chatt]()
 
+    private let nFields = Mirror(reflecting: Chatt()).children.count
+    private let mutex = Mutex(false)
+    private var isRetrieving = false
+    
     private let serverUrl = "https://3.129.24.48"
   
     // networking methods
-    func llmPrompt(_ chatt: Chatt, errMsg: Binding<String>) async {
+    func postChatt(_ chatt: Chatt, errMsg: Binding<String>) async {
             
-        self.chatts.append(chatt)
-            
-        // prepare placeholder
-        let resChatt = Chatt( // placeholder for assistant's streaming reply
-            name: "assistant (\(chatt.name ?? "ollama"))",
-            message: "")
-        self.chatts.append(resChatt)
-            
-        // prepare prompt
-        guard let apiUrl = URL(string: "\(serverUrl)/llmprompt") else {
-            errMsg.wrappedValue = "llmPrompt: Bad URL"
+        guard let apiUrl = URL(string: "\(serverUrl)/postchatt") else {
+            errMsg.wrappedValue = "postChatt: Bad URL"
             return
         }
-        let ollamaRequest: [String: Any] = [
-            "model": chatt.name as Any,
-            "prompt": chatt.message as Any,
-            "stream": true
-        ]
+        let chattObj = ["name": chatt.name, "message": chatt.message]
+        guard let requestBody = try? JSONSerialization.data(withJSONObject: chattObj) else {
+            errMsg.wrappedValue = "postChatt: JSONSerialization error"
+            return
+        }
         
-        guard let requestBody = try? JSONSerialization.data(withJSONObject: ollamaRequest) else {
-            errMsg.wrappedValue = "llmPrompt: JSONSerialization error"
-            return
-        }
-
-        // prepare request
         var request = URLRequest(url: apiUrl)
-        request.timeoutInterval = 1200 // for 20 minutes
         request.httpMethod = "POST"
         request.setValue("application/json; charset=utf-8", forHTTPHeaderField: "Content-Type")
-        request.setValue("application/*", forHTTPHeaderField: "Accept")
         request.httpBody = requestBody
-
-        // connect to chatterd and Ollama
+        
         do {
-            let (bytes, response) = try await URLSession.shared.bytes(for: request)
+            let (_, response) = try await URLSession.shared.data(for: request)
             
             if let http = response as? HTTPURLResponse, http.statusCode != 200 {
-                var msg = ""
-                for try await line in bytes.lines {
-                    guard let data = line.data(using: .utf8) else {
-                        continue
-                    }
-                    msg += String(data: data, encoding: .utf8) ?? ""
-                }
-                errMsg.wrappedValue = "\(http.statusCode)\n\(apiUrl)\n\(msg.isEmpty ? HTTPURLResponse.localizedString(forStatusCode: http.statusCode) : msg)"
+                errMsg.wrappedValue = "postChatt: \(http.statusCode)\n\(apiUrl)\n\(HTTPURLResponse.localizedString(forStatusCode: http.statusCode))"
+            }
+        } catch {
+            errMsg.wrappedValue = "postChatt: POSTing failed \(error)"
+        }
+    }
+    
+    func getChatts(errMsg: Binding<String>) async {
+        // only one outstanding retrieval
+        let inProgress = mutex.withLock { _ in
+            guard !self.isRetrieving else {
+                return true
+            }
+            self.isRetrieving = true
+            return false
+        }
+        if inProgress { return }
+        defer {
+            mutex.withLock { _ in
+                self.isRetrieving = false
+            }
+        }
+
+        guard let apiUrl = URL(string: "\(serverUrl)/getchatts") else {
+            errMsg.wrappedValue = "getChatts: Bad URL"
+            return
+        }
+        var request = URLRequest(url: apiUrl)
+        request.httpMethod = "GET"
+        request.setValue("application/json; charset=utf-8", forHTTPHeaderField: "Accept")
+        
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+            
+            if let http = response as? HTTPURLResponse, http.statusCode != 200 {
+                errMsg.wrappedValue = "getChatts: \(http.statusCode) \(HTTPURLResponse.localizedString(forStatusCode: http.statusCode))\n\(apiUrl)"
                 return
             }
 
-            // receive Ollama response
-            // streaming NDJSON
-                for try await line in bytes.lines {
-                    guard let data = line.data(using: .utf8) else {
-                        continue
-                    }
-                    do {
-                        let ollamaResponse = try JSONDecoder().decode(OllamaReply.self, from: data)
-                        resChatt.message?.append(ollamaResponse.response)
-                    } catch {
-                        errMsg.wrappedValue += "\(error)\n\(apiUrl)\n\(String(data: data, encoding: .utf8) ?? "decoding error")"
-                        resChatt.message?.append("\nllmPrompt Error: \(errMsg.wrappedValue)\n\n")
-                    }
+            guard let chattsReceived = try? JSONSerialization.jsonObject(with: data) as? [[String?]] else {
+                errMsg.wrappedValue = "getChatts: failed JSON deserialization"
+                return
+            }
+                
+            chatts = [Chatt]()
+            for chattEntry in chattsReceived {
+                if chattEntry.count == self.nFields {
+                    chatts.append(Chatt(name: chattEntry[0],
+                                         message: chattEntry[1],
+                                         id: UUID(uuidString: chattEntry[2] ?? ""),
+                                         timestamp: chattEntry[3]))
+                } else {
+                    errMsg.wrappedValue = "getChatts: Received unexpected number of fields: \(chattEntry.count) instead of \(self.nFields)."
                 }
+            }
+
         } catch {
-            errMsg.wrappedValue = "llmPrompt: failed \(error)"
+            errMsg.wrappedValue = "getChatts: Failed GET request \(error)"
         }
-              
-        }
+    }
 
 }

@@ -17,10 +17,9 @@ struct SubmitButton: View {
         Button {
             isSending = true
             Task (priority: .background){
-                await ChattStore.shared.llmPrompt(
-                    Chatt(name: vm.onTrailingEnd,
-                          message: vm.message),
-                    errMsg: Bindable(vm).errMsg)
+                await ChattStore.shared.postChatt(Chatt(name: vm.onTrailingEnd, message: vm.message), errMsg: Bindable(vm).errMsg)
+                if vm.errMsg.isEmpty { await ChattStore.shared.getChatts(errMsg: Bindable(vm).errMsg) }
+
                 // completion code
                 vm.message = ""
                 isSending = false
@@ -63,6 +62,14 @@ struct ContentView: View {
                     .onAppear {
                         scrollProxy = proxy
                     }
+                    .refreshable {
+                        await ChattStore.shared.getChatts(errMsg: Bindable(vm).errMsg)
+                        Task (priority: .userInitiated) {
+                            withAnimation {
+                                scrollProxy?.scrollTo(ChattStore.shared.chatts.last?.id, anchor: .bottom)
+                            }
+                        }
+                    }
             }
             // prompt input and submit
             HStack (alignment: .bottom) {
@@ -86,6 +93,15 @@ struct ContentView: View {
         }
         .navigationTitle("llmPrompt")
         .navigationBarTitleDisplayMode(.inline)
+        .task (priority: .background) {
+            await ChattStore.shared.getChatts(errMsg: Bindable(vm).errMsg)
+            vm.showError = !vm.errMsg.isEmpty
+            Task (priority: .userInitiated) {
+                withAnimation {
+                    scrollProxy?.scrollTo(ChattStore.shared.chatts.last?.id, anchor: .bottom)
+                }
+            }
+        }
         // show error in an alert dialog
         .alert("LLM Error", isPresented: Bindable(vm).showError) {
             Button("OK") {
