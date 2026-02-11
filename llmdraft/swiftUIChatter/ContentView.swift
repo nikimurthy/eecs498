@@ -50,6 +50,31 @@ struct SubmitButton: View {
     }
 }
 
+struct AiButton: View {
+    @Environment(ChattViewModel.self) private var vm
+
+    var body: some View {
+        Button {
+            // Set busy BEFORE starting task (requirement)
+            vm.isOllamaBusy = true
+            vm.errMsg = ""
+
+            Task(priority: .background) {
+                await promptLlm(vm, prompt: """
+                You are a poet. Rewrite the content below to a poetic version. Don't list options. Here's the content I want you to rewrite:
+                """)
+                vm.isOllamaBusy = false
+                vm.showError = !vm.errMsg.isEmpty
+            }
+        } label: {
+            Image(systemName: "sparkles")
+                .foregroundColor((vm.message.isEmpty || vm.isOllamaBusy) ? .gray : .blue)
+                .padding(10)
+        }
+        .disabled(vm.message.isEmpty || vm.isOllamaBusy)
+    }
+}
+
 struct ContentView: View {
     @Environment(ChattViewModel.self) private var vm
     @State private var scrollProxy: ScrollViewProxy?
@@ -73,6 +98,8 @@ struct ContentView: View {
             }
             // prompt input and submit
             HStack (alignment: .bottom) {
+                AiButton()
+                
                 TextField(vm.instruction, text: Bindable(vm).message, axis: .vertical)
                     .lineLimit(1...6)
                     .focused($messageInFocus) // to dismiss keyboard
@@ -113,4 +140,23 @@ struct ContentView: View {
         }
 
     }
+}
+
+func promptLlm(_ vm: ChattViewModel, prompt: String) async {
+
+    let modelName = "gemma3:270m"   // or gemma3 if using mada
+
+    let content = vm.message
+    let fullPrompt = "\(prompt)\n\n\(content)"
+
+    // clear textbox so streamed draft shows
+    vm.message = ""
+
+    let chatt = Chatt(name: modelName, message: fullPrompt)
+
+    await ChattStore.shared.llmDraft(
+        chatt,
+        draft: Bindable(vm).message,
+        errMsg: Bindable(vm).errMsg
+    )
 }

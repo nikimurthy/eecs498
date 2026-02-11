@@ -13,9 +13,13 @@ final class ChattViewModel {
 
     let instruction = "Type a message…"
     var message = "howdy?"
+    var draft = ""           
+    var isOllamaBusy = false
     
     var errMsg = ""
     var showError = false
+    
+    var messageInFocus: FocusState<Bool>.Binding!
 }
 
 @main

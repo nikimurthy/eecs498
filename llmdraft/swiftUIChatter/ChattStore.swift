@@ -103,5 +103,60 @@ final class ChattStore {
             errMsg.wrappedValue = "getChatts: Failed GET request \(error)"
         }
     }
+    
+    func llmDraft(_ chatt: Chatt, draft: Binding<String>, errMsg: Binding<String>) async {
+
+        // only one outstanding retrieval / llm call
+        let inProgress = mutex.withLock { _ in
+            guard !self.isRetrieving else { return true }
+            self.isRetrieving = true
+            return false
+        }
+        if inProgress { return }
+        defer {
+            mutex.withLock { _ in
+                self.isRetrieving = false
+            }
+        }
+
+        guard let apiUrl = URL(string: "\(serverUrl)/llmprompt") else {
+            errMsg.wrappedValue = "llmDraft: Bad URL"
+            return
+        }
+
+        let chattObj = ["name": chatt.name, "message": chatt.message]
+        guard let requestBody = try? JSONSerialization.data(withJSONObject: chattObj) else {
+            errMsg.wrappedValue = "llmDraft: JSONSerialization error"
+            return
+        }
+
+        var request = URLRequest(url: apiUrl)
+        request.httpMethod = "POST"
+        request.setValue("application/json; charset=utf-8", forHTTPHeaderField: "Content-Type")
+        request.httpBody = requestBody
+
+        do {
+            let (bytes, response) = try await URLSession.shared.bytes(for: request)
+
+            if let http = response as? HTTPURLResponse, http.statusCode != 200 {
+                errMsg.wrappedValue = "llmDraft: \(http.statusCode)\n\(apiUrl)\n\(HTTPURLResponse.localizedString(forStatusCode: http.statusCode))"
+                return
+            }
+
+            // stream output into draft
+            draft.wrappedValue = ""
+
+            for try await line in bytes.lines {
+                guard let data = line.data(using: .utf8),
+                      let reply = try? JSONDecoder().decode(OllamaReply.self, from: data)
+                else { continue }
+
+                draft.wrappedValue += reply.response
+            }
+
+        } catch {
+            errMsg.wrappedValue = "llmDraft: request failed \(error)"
+        }
+    }
 
 }
