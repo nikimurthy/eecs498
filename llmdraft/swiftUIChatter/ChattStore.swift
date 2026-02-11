@@ -19,6 +19,7 @@ final class ChattStore {
     private var isRetrieving = false
     
     private let serverUrl = "https://3.129.24.48"
+//    private let serverUrl = "https://mada.eecs.umich.edu"
   
     // networking methods
     func postChatt(_ chatt: Chatt, errMsg: Binding<String>) async {

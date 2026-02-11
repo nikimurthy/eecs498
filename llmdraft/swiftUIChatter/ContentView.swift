@@ -73,7 +73,8 @@ struct ContentView: View {
             }
             // prompt input and submit
             HStack (alignment: .bottom) {
-                TextField(vm.instruction, text: Bindable(vm).message)
+                TextField(vm.instruction, text: Bindable(vm).message, axis: .vertical)
+                    .lineLimit(1...6)
                     .focused($messageInFocus) // to dismiss keyboard
                     .textFieldStyle(.roundedBorder)
                     .cornerRadius(20)
