@@ -35,13 +35,13 @@ func top(c echo.Context) error {
 	return c.JSON(http.StatusOK, "EECS Reactive chatterd")
 }
 
-var OLLAMA_BASE_URL, _ = url.Parse("http://localhost:11434/api")
+var OLLAMA_BASE_URL, _ = url.Parse("http://localhost:11434")
 var proxy = httputil.NewSingleHostReverseProxy(OLLAMA_BASE_URL)
 
 func llmprompt(c echo.Context) error {
     req := c.Request()
     req.Host = OLLAMA_BASE_URL.Host
-    req.URL.Path = "/generate"
+    req.URL.Path = "/api/generate"
 
     proxy.ServeHTTP(c.Response(), req)
     logOk(c)
