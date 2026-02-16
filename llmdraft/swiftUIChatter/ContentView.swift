@@ -144,7 +144,7 @@ struct ContentView: View {
 
 func promptLlm(_ vm: ChattViewModel, prompt: String) async {
 
-    let modelName = "gemma3:270m"   // or gemma3 if using mada
+    let modelName = "gemma3:270m"
 
     let content = vm.message
     let fullPrompt = "\(prompt)\n\n\(content)"

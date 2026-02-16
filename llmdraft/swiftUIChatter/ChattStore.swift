@@ -119,7 +119,7 @@ final class ChattStore {
             }
         }
 
-        guard let apiUrl = URL(string: "\(serverUrl)/llmprompt") else {
+        guard let apiUrl = URL(string: "\(serverUrl)/llmprompt/") else {
             errMsg.wrappedValue = "llmDraft: Bad URL"
             return
         }
