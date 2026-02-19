@@ -1,2 +1,2 @@
 llmPrompt tutorial grade: 84.62/100
-llmPlay project grade: 76/100
+llmDraft project grade: 76/100
