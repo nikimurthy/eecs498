@@ -7,6 +7,25 @@ struct OllamaReply: Decodable {
     let response: String
 }
 
+enum SseEventType { case Error, Message }
+
+struct OllamaMessage: Codable {
+    let role: String
+    let content: String?
+}
+
+struct OllamaRequest: Encodable {
+    let appID: String?
+    let model: String?
+    let messages: [OllamaMessage]
+    let stream: Bool
+}
+
+struct OllamaResponse: Decodable {
+    let model: String
+    let message: OllamaMessage
+}
+
 @Observable
 final class ChattStore {
     static let shared = ChattStore() // create one instance of the class to be shared, and
@@ -104,7 +123,7 @@ final class ChattStore {
         }
     }
     
-    func llmDraft(_ chatt: Chatt, draft: Binding<String>, errMsg: Binding<String>) async {
+    func llmChat(appID: String, chatt: Chatt, errMsg: Binding<String>) async {
 
         // only one outstanding retrieval / llm call
         let inProgress = mutex.withLock { _ in
@@ -119,14 +138,20 @@ final class ChattStore {
             }
         }
 
-        guard let apiUrl = URL(string: "\(serverUrl)/llmprompt/") else {
+        guard let apiUrl = URL(string: "\(serverUrl)/llmchat/") else {
             errMsg.wrappedValue = "llmDraft: Bad URL"
             return
         }
 
         let chattObj = ["name": chatt.name, "message": chatt.message]
-        guard let requestBody = try? JSONSerialization.data(withJSONObject: chattObj) else {
-            errMsg.wrappedValue = "llmDraft: JSONSerialization error"
+        let ollamaRequest = OllamaRequest(
+            appID: appID,
+            model: chatt.name,
+            messages: [OllamaMessage(role: "user", content: chatt.message)],
+            stream: true
+        )
+        guard let requestBody = try? JSONEncoder().encode(ollamaRequest) else {
+            errMsg.wrappedValue = "llmChat: JSONEncoder error"
             return
         }
 
