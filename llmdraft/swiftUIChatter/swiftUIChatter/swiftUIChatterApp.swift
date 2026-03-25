@@ -10,7 +10,7 @@ import SwiftUI
 @Observable
 final class ChattViewModel {
     let onTrailingEnd = "nikivm"
-
+    let appID = Bundle.main.bundleIdentifier
     let instruction = "Type a message…"
     var message = "howdy?"
     var draft = ""           
