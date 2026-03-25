@@ -130,7 +130,7 @@ func llmchat(c echo.Context) error {
 	ollama_url := OLLAMA_BASE_URL.String() + "/api/chat"
 	request, _ := http.NewRequestWithContext(reqCtx, req.Method, ollama_url, bytes.NewReader(requestBody))
 	
-	response, err := http.DefaultClient.Do(request))
+	response, err := http.DefaultClient.Do(request)
 
 
 	if err != nil {
