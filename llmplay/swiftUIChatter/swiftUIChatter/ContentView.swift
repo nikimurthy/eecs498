@@ -9,7 +9,7 @@ import SwiftUI
 import MapKit
 
 struct SubmitButton: View {
-    @Binding var scrollProxy: ScrollViewProxy?
+    @Binding var cameraPosition: MapCameraPosition
     @Environment(ChattViewModel.self) private var vm
     
     @State private var isSending = false
@@ -19,21 +19,26 @@ struct SubmitButton: View {
             isSending = true
             Task (priority: .background){
                 if let appID = vm.appID {
-                    await ChattStore.shared.llmChat(
+                    await ChattStore.shared.llmPlay(
                         appID: appID,
                         chatt: Chatt(name: vm.onTrailingEnd,
                                      message: vm.message),
-                        errMsg: Bindable(vm).errMsg)
+                        hints: Bindable(vm).hints,
+                        winner: { loc in
+                            cameraPosition = .camera(MapCamera(
+                                centerCoordinate: CLLocationCoordinate2D(latitude: loc.lat, longitude: loc.lon),
+                                distance: 14000,
+                                heading: 0,
+                                pitch: 60)
+                            )
+                        },
+                        errMsg: Bindable(vm).errMsg
+                    )
                 }
                 // completion code
                 vm.message = ""
                 isSending = false
                 vm.showError = !vm.errMsg.isEmpty
-                Task (priority: .userInitiated) {
-                    withAnimation {
-                        scrollProxy?.scrollTo(ChattStore.shared.chatts.last?.id, anchor: .bottom)
-                    }
-                }
             }
         } label: {
             // icons
@@ -58,30 +63,32 @@ struct SubmitButton: View {
 struct ContentView: View {
     @Environment(ChattViewModel.self) private var vm
     @State var cameraPosition: MapCameraPosition = .userLocation(fallback: .automatic)
-    @State private var scrollProxy: ScrollViewProxy?
     @FocusState private var messageInFocus: Bool // tap background to dismiss kbd
     
     var body: some View {
         VStack {
-            ScrollViewReader { proxy in
-                ChattScrollView()
-                    .onAppear {
-                        scrollProxy = proxy
-                    }
+            Map(position: $cameraPosition) {
+                UserAnnotation()
             }
-            // prompt input and submit
-            HStack (alignment: .bottom) {
-                TextField(vm.instruction, text: Bindable(vm).message)
-                    .focused($messageInFocus) // to dismiss keyboard
-                    .textFieldStyle(.roundedBorder)
-                    .cornerRadius(20)
-                    .shadow(radius: 2)
-                    .background(Color(.clear))
-                    .border(Color(.clear))
 
-                SubmitButton(scrollProxy: $scrollProxy)
+            VStack(alignment: .leading, spacing: 12) {
+                Text(vm.hints)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal)
+
+                HStack(alignment: .bottom) {
+                    TextField(vm.instruction, text: Bindable(vm).message)
+                        .focused($messageInFocus)
+                        .textFieldStyle(.roundedBorder)
+                        .cornerRadius(20)
+                        .shadow(radius: 2)
+                        .background(Color(.clear))
+                        .border(Color(.clear))
+
+                    SubmitButton(cameraPosition: $cameraPosition)
+                }
+                .padding(EdgeInsets(top: 0, leading: 20, bottom: 8, trailing: 0))
             }
-            .padding(EdgeInsets(top: 0, leading: 20, bottom: 8, trailing: 0))
           
         }
         // tap background to dismiss kbd
@@ -89,10 +96,10 @@ struct ContentView: View {
         .onTapGesture {
             messageInFocus.toggle()
         }
-        .navigationTitle("llmPrompt")
+        .navigationTitle("Where In The World?")
         .navigationBarTitleDisplayMode(.inline)
         // show error in an alert dialog
-        .alert("LLM Error", isPresented: Bindable(vm).showError) {
+        .alert("Error", isPresented: Bindable(vm).showError) {
             Button("OK") {
                 vm.errMsg = ""
             }
