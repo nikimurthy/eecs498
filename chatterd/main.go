@@ -21,6 +21,8 @@ var routes = []Route {
 		{"POST", "/llmprep/", llmprep},
 	        {"GET", "/getchatts/", getchatts},
                 {"POST", "/postchatt/", postchatt},
+		{"GET", "/getmaps/", getmaps},
+   		{"POST", "/postmaps/", postmaps},
 }
 
 var background = context.Background()

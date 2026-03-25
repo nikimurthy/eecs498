@@ -38,6 +38,7 @@ type Chatt struct {
     Message   string    `json:"message"`
     Id        string    `json:"id"`
     Timestamp time.Time `json:"timestamp"`
+    Geodata  *string    `json:"geodata"`
 }
 
 func llmprep(c echo.Context) error {
@@ -262,5 +263,44 @@ func postchatt(c echo.Context) error {
 
     logOk(c)
 	  return c.JSON(http.StatusOK, struct{}{}) // empty struct instance serialized to empty JSON: {}
+}
+
+func postmaps(c echo.Context) error {
+    var chatt Chatt
+
+    if err := c.Bind(&chatt); err != nil {
+      return logClientErr(c, http.StatusUnprocessableEntity, err)
+    }
+
+    _, err := chatterDB.Exec(background, `INSERT INTO chatts (name, message, id, geodata) VALUES ($1, $2, gen_random_uuid(), $3)`, chatt.Name, chatt.Message, chatt.Geodata)
+    if err != nil {
+        return logClientErr(c, http.StatusBadRequest, err)
+    }
+
+    logOk(c)
+          return c.JSON(http.StatusOK, struct{}{}) // empty struct instance serialized to empty JSON: {}
+}
+
+func getmaps(c echo.Context) error {
+    var chattArr = [][]any{}
+    var chatt Chatt
+
+    rows, err := chatterDB.Query(background, `SELECT name, message, id, time, geodata FROM chatts ORDER BY time ASC`)
+    if err != nil {
+      if rows != nil { rows.Close() }
+                  return logServerErr(c, err)
+    }
+
+    for rows.Next() {
+        err = rows.Scan(&chatt.Name, &chatt.Message, &chatt.Id, &chatt.Timestamp, &chatt.Geodata)
+        if err != nil {
+          rows.Close()
+          return logServerErr(c, err)
+        }
+        chattArr = append(chattArr, []any{chatt.Name, chatt.Message, chatt.Id, chatt.Timestamp, chatt.Geodata})
+    }
+
+    logOk(c)
+    return c.JSON(http.StatusOK, chattArr)
 }
 
