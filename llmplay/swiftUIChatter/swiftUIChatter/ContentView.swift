@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import MapKit
 
 struct SubmitButton: View {
     @Binding var scrollProxy: ScrollViewProxy?
@@ -56,6 +57,7 @@ struct SubmitButton: View {
 
 struct ContentView: View {
     @Environment(ChattViewModel.self) private var vm
+    @State var cameraPosition: MapCameraPosition = .userLocation(fallback: .automatic)
     @State private var scrollProxy: ScrollViewProxy?
     @FocusState private var messageInFocus: Bool // tap background to dismiss kbd
     

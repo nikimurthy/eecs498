@@ -15,7 +15,7 @@ final class ChattViewModel {
     let sysmsg = "Start every assistant reply with GO BLUE!!!"
     
     let instruction = "Type a message…"
-    var message = "howdy?"
+    var message = ""
     
     var errMsg = ""
     var showError = false
@@ -26,6 +26,7 @@ struct swiftUIChatterApp: App {
     let viewModel = ChattViewModel()
     
     init() {
+        LocManager.shared.startUpdates()
         // disable interaction until llmPrep is done
         Task { [self] in
             if let appID = viewModel.appID, !viewModel.sysmsg.isEmpty {
