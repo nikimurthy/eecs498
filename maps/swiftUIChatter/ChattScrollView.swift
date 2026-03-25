@@ -6,8 +6,11 @@
 //
 
 import SwiftUI
+import MapKit
 
 struct ChattView: View {
+    @Environment(ChattViewModel.self) private var vm
+    
     let chatt: Chatt
     let onTrailingEnd: Bool
     
@@ -19,14 +22,19 @@ struct ChattView: View {
                     .foregroundColor(.purple)
                     .padding(.leading, 4)
                 
-                Text(msg)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                    .background(Color(onTrailingEnd ? .systemBlue : .systemBackground))
-                    .foregroundColor(onTrailingEnd ? .white: .primary)
-                    .cornerRadius(20)
-                    .shadow(radius: 2)
-                    .frame(maxWidth: 300, alignment: onTrailingEnd ? .trailing : .leading)
+                HStack(alignment: .top, spacing: 10) {
+                    if onTrailingEnd && chatt.geodata != nil {
+                        PinView()
+                            .foregroundStyle(.white)
+                    }
+                    
+                    Text(msg)
+                    
+                    if !onTrailingEnd && chatt.geodata != nil {
+                        PinView()
+                            .foregroundStyle(.blue)
+                    }
+                }
                 
                 Text(chatt.timestamp ??  "")
                     .font(.caption2)
@@ -37,6 +45,21 @@ struct ChattView: View {
             }
         }
         .padding(.horizontal, 16)
+    }
+    
+    @ViewBuilder
+    func PinView() -> some View {
+        Image(systemName: "mappin.and.ellipse")
+            .font(.caption)
+            .padding(.top, 3)
+            .onTapGesture {
+                if let geodata = chatt.geodata {
+                    vm.selected = chatt
+                    vm.cameraPosition = .camera(MapCamera(
+                        centerCoordinate: CLLocationCoordinate2D(latitude: geodata.lat, longitude: geodata.lon), distance: 500, heading: 0, pitch: 60))
+                    vm.showMap.toggle()
+                }
+            }
     }
 }
 
