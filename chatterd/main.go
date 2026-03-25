@@ -17,8 +17,12 @@ type Route struct {
 var routes = []Route {
 		// {"GET", "/", top},	
 		{"POST", "/llmprompt/", llmprompt},
+		{"POST", "/llmchat/", llmchat},
+		{"POST", "/llmprep/", llmprep},
 	        {"GET", "/getchatts/", getchatts},
                 {"POST", "/postchatt/", postchatt},
+		{"GET", "/getmaps/", getmaps},
+   		{"POST", "/postmaps/", postmaps},
 }
 
 var background = context.Background()
