@@ -31,8 +31,8 @@ final class ChattStore {
 
     private(set) var chatts = [Chatt]()
 
-//    private let serverUrl = "https://3.129.24.48"
-    private let serverUrl = "https://mada.eecs.umich.edu"
+    private let serverUrl = "https://3.129.24.48"
+//    private let serverUrl = "https://mada.eecs.umich.edu"
   
     
     func llmPrep(appID: String, chatt: Chatt, errMsg: Binding<String>) async {
