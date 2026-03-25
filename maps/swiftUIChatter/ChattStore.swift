@@ -24,11 +24,19 @@ final class ChattStore {
     // networking methods
     func postChatt(_ chatt: Chatt, errMsg: Binding<String>) async {
             
-        guard let apiUrl = URL(string: "\(serverUrl)/postchatt") else {
+        guard let apiUrl = URL(string: "\(serverUrl)/postmaps/") else {
             errMsg.wrappedValue = "postChatt: Bad URL"
             return
         }
-        let chattObj = ["name": chatt.name, "message": chatt.message]
+        
+        var geoObj: Data?
+        if let geodata = chatt.geodata {
+            geoObj = try? JSONSerialization.data(withJSONObject: [geodata.lat, geodata.lon, geodata.facing, geodata.speed])
+        }
+        
+        let chattObj = ["name": chatt.name,
+                       "message": chatt.message,
+                       "geodata": (geoObj == nil) ? nil : String(data: geoObj!, encoding: .utf8)]
         guard let requestBody = try? JSONSerialization.data(withJSONObject: chattObj) else {
             errMsg.wrappedValue = "postChatt: JSONSerialization error"
             return
@@ -66,7 +74,7 @@ final class ChattStore {
             }
         }
 
-        guard let apiUrl = URL(string: "\(serverUrl)/getchatts") else {
+        guard let apiUrl = URL(string: "\(serverUrl)/getmaps/") else {
             errMsg.wrappedValue = "getChatts: Bad URL"
             return
         }
@@ -90,10 +98,19 @@ final class ChattStore {
             chatts = [Chatt]()
             for chattEntry in chattsReceived {
                 if chattEntry.count == self.nFields {
+                    let geoArr = chattEntry[4]?.data(using: .utf8).flatMap {
+                        try? JSONSerialization.jsonObject(with: $0) as? [Any]
+                    }
                     chatts.append(Chatt(name: chattEntry[0],
                                          message: chattEntry[1],
                                          id: UUID(uuidString: chattEntry[2] ?? ""),
-                                         timestamp: chattEntry[3]))
+                                         timestamp: chattEntry[3],
+                                         geodata: geoArr.map {
+                        GeoData(lat: $0[0] as! Double,
+                                lon: $0[1] as! Double,
+                                facing: $0[2] as! String,
+                                speed: $0[3] as! String)
+                    }))
                 } else {
                     errMsg.wrappedValue = "getChatts: Received unexpected number of fields: \(chattEntry.count) instead of \(self.nFields)."
                 }

@@ -6,22 +6,30 @@
 //
 
 import SwiftUI
+import MapKit
 
 @Observable
 final class ChattViewModel {
-    let onTrailingEnd = "nikivm"
+    let onTrailingEnd = "gemma3:270m"
 
     let instruction = "Type a message…"
     var message = "howdy?"
     
     var errMsg = ""
     var showError = false
+    var cameraPosition: MapCameraPosition = .userLocation(fallback: .automatic)
+    var selected: Chatt? = nil
+    var showMap = false
 }
 
 @main
 struct swiftUIChatterApp: App {
     let viewModel = ChattViewModel()
-
+    
+    init() {
+        LocManager.shared.startUpdates()
+    }
+    
     var body: some Scene {
         WindowGroup {
             NavigationStack {
