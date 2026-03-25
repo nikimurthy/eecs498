@@ -175,7 +175,18 @@ func llmchat(c echo.Context) error {
 	}
 
 	if len(tokens) != 0 {
-		var completion = strings.Join(tokens, " ")
+		var completion = strings.Join(tokens, " ") 
+		winnerCheck := strings.ReplaceAll(completion, " ", "")
+
+		if strings.HasPrefix(winnerCheck, "WINNER!!!:") {
+        		parts := strings.Split(winnerCheck, ":")
+        		if len(parts) >= 3 {
+                		lat := parts[1]
+                		lon := parts[2]
+                		_, _ = fmt.Fprintf(res, "event: latlon\ndata: { \"lat\": %s, \"lon\": %s }\n\n", lat, lon)
+               			res.Flush()
+        		}	
+		}
 		
 		// save full response to db, to form part of next prompt's history
 		_, err = chatterDB.Exec(background, `INSERT INTO chatts (name, message, id, appid) VALUES ('assistant', $1, gen_random_uuid(), $2)`,
