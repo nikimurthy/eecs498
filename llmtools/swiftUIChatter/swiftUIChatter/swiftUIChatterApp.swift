@@ -10,12 +10,13 @@ import SwiftUI
 @Observable
 final class ChattViewModel {
 //    let onTrailingEnd = "qwen3:0.6b"
-    let onTrailingEnd = "gemma3:270m"
+//    let onTrailingEnd = "gemma3:270m"
+    let onTrailingEnd = "qwen3:8b"
     let appID = Bundle.main.bundleIdentifier
-    let sysmsg = "Start every assistant reply with GO BLUE!!!"
+    let sysmsg = ""
     
     let instruction = "Type a message…"
-    var message = "howdy?"
+    var message = "What is the weather at my location?"
     
     var errMsg = ""
     var showError = false
@@ -26,6 +27,7 @@ struct swiftUIChatterApp: App {
     let viewModel = ChattViewModel()
     
     init() {
+        LocManager.shared.startUpdates()
         // disable interaction until llmPrep is done
         Task { [self] in
             if let appID = viewModel.appID, !viewModel.sysmsg.isEmpty {

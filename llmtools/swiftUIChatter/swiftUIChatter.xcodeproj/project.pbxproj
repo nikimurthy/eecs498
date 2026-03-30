@@ -16,6 +16,12 @@
 			path = swiftUIChatter;
 			sourceTree = "<group>";
 		};
+		6D930F392F7AC65300FE04D8 /* tools */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			name = tools;
+			path = /Users/nmurthy/Desktop/CodingProjects/eecs498/tools;
+			sourceTree = "<absolute>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -34,6 +40,7 @@
 			children = (
 				6D2D73D82F1881A70034E16F /* swiftUIChatter */,
 				6D2D73D72F1881A70034E16F /* Products */,
+				6D930F392F7AC65300FE04D8 /* tools */,
 			);
 			sourceTree = "<group>";
 		};
@@ -62,6 +69,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				6D2D73D82F1881A70034E16F /* swiftUIChatter */,
+				6D930F392F7AC65300FE04D8 /* tools */,
 			);
 			name = swiftUIChatter;
 			packageProductDependencies = (
@@ -253,6 +261,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "to process chatts";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -284,6 +293,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "to process chatts";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

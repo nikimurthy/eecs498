@@ -18,7 +18,7 @@ struct SubmitButton: View {
             isSending = true
             Task (priority: .background){
                 if let appID = vm.appID {
-                    await ChattStore.shared.llmChat(
+                    await ChattStore.shared.llmTools(
                         appID: appID,
                         chatt: Chatt(name: vm.onTrailingEnd,
                                      message: vm.message),
