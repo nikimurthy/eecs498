@@ -18,6 +18,8 @@ var routes = []Route {
 		// {"GET", "/", top},	
 		{"POST", "/llmprompt/", llmprompt},
 		{"POST", "/llmchat/", llmchat},
+		{"POST", "/llmtools/", llmtools},
+    		{"GET", "/weather/", weather},
 		{"POST", "/llmprep/", llmprep},
 	        {"GET", "/getchatts/", getchatts},
                 {"POST", "/postchatt/", postchatt},
