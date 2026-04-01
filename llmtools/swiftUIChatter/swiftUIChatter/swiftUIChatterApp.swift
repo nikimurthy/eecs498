@@ -9,9 +9,10 @@ import SwiftUI
 
 @Observable
 final class ChattViewModel {
-//    let onTrailingEnd = "qwen3:0.6b"
+    let onTrailingEnd = "qwen3:0.6b"
 //    let onTrailingEnd = "gemma3:270m"
-    let onTrailingEnd = "qwen3:8b"
+//    let onTrailingEnd = "qwen3:8b"
+//    let onTrailingEnd = "qwen3"
     let appID = Bundle.main.bundleIdentifier
     let sysmsg = ""
     

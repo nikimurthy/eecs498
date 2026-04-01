@@ -169,6 +169,7 @@ final class ChattStore {
                     let parts = line.split(separator: ":", maxSplits: 1, omittingEmptySubsequences: false)
                     let event = parts[1].trimmingCharacters(in: .whitespaces)
                     if parts[0].starts(with: "event") {
+                        print("SSE EVENT:", event)
                         if event == "error" {
                             sseEvent = .Error
                         } else if event == "tool_calls" {
@@ -188,13 +189,14 @@ final class ChattStore {
                         let data = Data(parts[1].trimmingCharacters(in: .whitespaces).utf8)
                         
                         do {
-                            let ollamaResponse = try decoder.decode(OllamaResponse.self, from: data)
+                            let ollamaResponse = try JSONDecoder().decode(OllamaResponse.self, from: data)
                             
                             if let token = ollamaResponse.message.content, !token.isEmpty {
                                 resChatt.message?.append(token)
-                            } else if let token = ollamaResponse.message.thinking, !token.isEmpty {
-                                resChatt.message?.append(token)
                             }
+//                            } else if let token = ollamaResponse.message.thinking, !token.isEmpty {
+//                                resChatt.message?.append(token)
+//                            }
                             
                             // check tool call and make the tool call
                             if sseEvent == .ToolCalls, let toolCalls = ollamaResponse.message.toolCalls {
@@ -205,7 +207,7 @@ final class ChattStore {
                                     if toolResult != nil {
                                         // reuse OllamaMessage to carry tool result
                                         // to be sent back to Ollama
-                                        ollamaRequest.messages = [OllamaMessage(role: "tool", content: toolResult, toolCalls: nil)]
+                                        ollamaRequest.messages = [OllamaMessage(role: "tool", content: toolResult, thinking: nil, toolCalls: nil)]
                                         
                                         // don't send tools multiple times
                                         ollamaRequest.tools = nil
