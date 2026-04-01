@@ -1,2 +1,3 @@
 llmPrompt tutorial grade: 84.62/100
 llmDraft project grade: 76/100
+llmCan project grade: 100.0/100
