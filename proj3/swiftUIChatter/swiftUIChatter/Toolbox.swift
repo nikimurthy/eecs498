@@ -57,10 +57,18 @@ struct Tool {
 
 let TOOLBOX = [
     "get_location": Tool(schema: jsonToSchema("get_location"), function: getLocation),
+    "get_auth": Tool(schema: jsonToSchema("get_auth"), function: getAuth),
 ]
 
 func getLocation(_ argv: [String]) async -> String? {
     "latitude: \(LocManagerViewModel.shared.location.lat), longitude: \(LocManagerViewModel.shared.location.lon)"
+}
+
+func getAuth(_ argv: [String]) async -> String? {
+    if let id = ChatterID.shared.id {
+        return id
+    }
+    return nil
 }
 
 func jsonToSchema(_ tool: String) -> OllamaToolSchema {

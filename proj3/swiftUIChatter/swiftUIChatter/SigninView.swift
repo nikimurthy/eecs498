@@ -26,6 +26,7 @@ struct SigninView: View {
                             getChatterID(token)
                         } else {
                             vm.errMsg = "Failed Google Sign-In. Please try again."
+                            vm.showError = true
                         }
                         isPresenting.toggle()
                     }
@@ -50,14 +51,15 @@ struct SigninView: View {
         Task (priority: .background) {
             if let _ = await ChattStore.shared.addUser(token, errMsg: Bindable(vm).errMsg) {
 
-                // save chatterID
                 await ChatterID.shared.save(errMsg: Bindable(vm).errMsg, showOk: Bindable(vm).showOk)
                 if vm.errMsg.isEmpty {
                     vm.showOk = true
                     vm.errMsg = "ChatterID refreshed."
                 }
 
-                await vm.signinCompletion?()  // call the completion after SigninView()
+                await vm.signinCompletion?()
+            } else {
+                vm.showError = true
             }
         }
     }

@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Security
 
 final class ChatterID {
     static let shared = ChatterID()
@@ -109,7 +110,7 @@ final class ChatterID {
         
         let updateStatus = SecItemUpdate(item as CFDictionary, updates as CFDictionary)
         if (updateStatus != 0) {
-            errMsg.wrappedValue = "\(String(describing: SecCopyErrorMessageString(updateStatus, nil)!))\nChatterID can be used to post, but you will be asked to sign in again when you restart Chatter"
+            errMsg.wrappedValue = "\(String(describing: SecCopyErrorMessageString(updateStatus, nil)!))\nChatterID can be used to post, but you will be asked to sign in again next time"
         } else {
             showOk.wrappedValue = true
             errMsg.wrappedValue = "ChatterID saved"

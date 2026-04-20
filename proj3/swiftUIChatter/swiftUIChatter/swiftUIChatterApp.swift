@@ -46,9 +46,9 @@ struct swiftUIChatterApp: App {
         }
         
         Task(priority: .background) { [self] in
-            await ChatterID.shared.open(errMsg: Bindable(vm).errMsg, showOk: Bindable(vm).showOk)
+            await ChatterID.shared.open(errMsg: Bindable(viewModel).errMsg, showOk: Bindable(viewModel).showOk)
             if !ChatterID.shared.creator.isEmpty {
-                vm.onTrailingEnd = ChatterID.shared.creator
+                viewModel.onTrailingEnd = ChatterID.shared.creator
             }
         }
     }

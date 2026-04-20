@@ -32,18 +32,19 @@ struct SubmitButton: View {
                 
                 // may still be nil if signin failed
                 if (ChatterID.shared.id != nil) {
-                    await ChattStore.shared.postChatt(Chatt(name: vm.onTrailingEnd, message: vm.message), errMsg: Bindable(vm).errMsg)
-                    if vm.showOk || vm.errMsg.isEmpty {
-                        await ChattStore.shared.getChatts(errMsg: Bindable(vm).errMsg)
-                        Task (priority: .userInitiated) {
-                            withAnimation {
-                                scrollProxy?.scrollTo(ChattStore.shared.chatts.last?.id, anchor: .bottom)
-                                focus.wrappedValue = false
-                            }
+                    if let appID = vm.appID {
+                        await ChattStore.shared.llmTools(
+                            appID: appID,
+                            chatt: Chatt(name: vm.onTrailingEnd, message: vm.message),
+                            errMsg: Bindable(vm).errMsg
+                        )
+                    }
+
+                    Task (priority: .userInitiated) {
+                        withAnimation {
+                            scrollProxy?.scrollTo(ChattStore.shared.chatts.last?.id, anchor: .bottom)
+                            focus.wrappedValue = false
                         }
-                    } else if vm.errMsg.contains("401") {
-                        // delete potentially invalid chatterID from Keychain
-                        await ChatterID.shared.delete(Bindable(vm).errMsg)
                     }
                 }
                 vm.message = ""
@@ -103,20 +104,24 @@ struct ContentView: View {
         .onTapGesture {
             messageInFocus.toggle()
         }
-        .navigationTitle("llmPrompt")
+        .navigationTitle("llmAction")
         .navigationBarTitleDisplayMode(.inline)
         // show error in an alert dialog
         .alert("LLM Error", isPresented: Bindable(vm).showError) {
             Button("OK") {
                 vm.errMsg = ""
             }
-        } .alert("Advisory", isPresented: Bindable(vm).showOk) {
+        } message: {
+            Text(vm.errMsg)
+        }
+        .alert("Advisory", isPresented: Bindable(vm).showOk) {
             Button("OK") {
                 vm.errMsg = ""
             }
         } message: {
             Text(vm.errMsg)
-        } .sheet(isPresented: Bindable(vm).getSignedin) {
+        }
+        .sheet(isPresented: Bindable(vm).getSignedin) {
             SigninView(isPresenting: Bindable(vm).getSignedin)
                 .presentationDetents([.fraction(0.25)])
                 .presentationDragIndicator(.hidden)

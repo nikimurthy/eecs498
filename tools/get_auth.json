@@ -1,0 +1,8 @@
+{
+    "type": "function",
+    "function": {
+        "name": "get_auth",
+        "description": "Get the current authorization token",
+        "parameters": null
+    }
+}
