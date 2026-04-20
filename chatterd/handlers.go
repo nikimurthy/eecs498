@@ -590,7 +590,33 @@ func llmtools(c echo.Context) error {
 						tool_calls = nil
 
 						// make the tool call
-						tool_result, tool_err = toolInvoke(toolCall.Function)
+						// HITL AUTH CHECK for ollama_cli
+						if toolCall.Function.Name == "ollama_cli" {
+    							chatterID := toolCall.Function.Arguments["auth"]
+
+    							var username string
+    							var exp int64
+    							now := time.Now().Unix()
+
+    							err := chatterDB.QueryRow(
+        							reqCtx,
+        							`SELECT username, expiration FROM chatters WHERE chatterID = $1`,
+        							chatterID,
+    							).Scan(&username, &exp)
+
+    							if err == pgx.ErrNoRows || now > exp {
+        							msg := "Unauthorized: invalid or expired token"
+        							tool_result = &msg
+        							tool_err = nil
+    							} else if err != nil {
+        							return logServerErr(c, err)
+    							} else {	
+        							// authorized → run tool
+        							tool_result, tool_err = toolInvoke(toolCall.Function)
+    							}
+						} else {
+    							tool_result, tool_err = toolInvoke(toolCall.Function)
+						}
 						if tool_err != nil {
 							// outcome 1: tool resident but had error
 							// send error back to LLM, don't report to frontend
