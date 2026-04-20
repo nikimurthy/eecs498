@@ -14,6 +14,10 @@ import (
 	"regexp"
 	"strings"
 	"time"
+	"crypto/sha256"
+   	"strconv"
+   	//...
+   	"google.golang.org/api/idtoken"
 
 	"github.com/jackc/pgx/v4"
 	"github.com/labstack/echo/v4"
@@ -49,6 +53,62 @@ type Chatt struct {
 type Location struct {
 	Lat string `json:"lat"`
 	Lon string `json:"lon"`
+}
+
+type (
+	AuthChatt struct {
+		ChatterID string `json:"chatterID"`
+		Message   string `json:"message"`
+	}
+	Chatter struct {
+		ClientID string `json:"clientID"`
+		IdToken  string `json:"idToken"`
+	}
+)
+
+func adduser(c echo.Context) error {
+	var chatter Chatter
+
+	if err := c.Bind(&chatter); err != nil {
+		return logClientErr(c, http.StatusUnprocessableEntity, err)
+	}
+
+	reqCtx := c.Request().Context()
+	idinfo, err := idtoken.Validate(reqCtx, chatter.IdToken, chatter.ClientID)
+	if err != nil {
+		return logClientErr(c, http.StatusUnauthorized, err)
+	}
+
+	username := "Profile NA"
+	name := idinfo.Claims["name"]
+	if name != nil {
+		username = name.(string)
+	}
+
+	// compute chatterIDD
+	const backendSecret = "ifyougiveamouse"
+	now := time.Now().Unix()
+	nonce := strconv.FormatInt(now, 10)
+	chatterID := fmt.Sprintf("%x", sha256.Sum256([]byte(chatter.IdToken+backendSecret+nonce)))
+
+	exp := idinfo.Expires
+	lifetime := min((exp-now)+1, 300) // secs, up to 1800, idToken lifetime
+
+	// add to database
+	_, err = chatterDB.Exec(background, `DELETE FROM chatters WHERE $1 > expiration`, now)
+	if err != nil {
+		return logServerErr(c, err)
+	}
+
+	_, err = chatterDB.Exec(background,
+		`INSERT INTO chatters (chatterid, username, expiration) VALUES ($1, $2, $3)`,
+		chatterID, username, now+lifetime)
+	if err != nil {
+		return logServerErr(c, err)
+	}
+
+	logOk(c)
+	return c.JSON(http.StatusOK, map[string]any{"username": username, "chatterID": chatterID, "lifetime": lifetime})
 }
 
 func OllamaMessageFromRow(row pgx.Rows, ollamaRequest *OllamaRequest) (*OllamaMessage, error) {
@@ -617,4 +677,34 @@ func llmtools(c echo.Context) error {
 
 	logOk(c)
 	return nil
+}
+
+func postauth(c echo.Context) error {
+	var chatt AuthChatt
+	var err error
+
+	if err = c.Bind(&chatt); err != nil {
+		return logClientErr(c, http.StatusUnprocessableEntity, err)
+	}
+
+	var username string
+	var exp int64
+	now := time.Now().Unix()
+	reqCtx := c.Request().Context()
+	err = chatterDB.QueryRow(reqCtx, `SELECT username, expiration FROM chatters WHERE chatterID = $1`, chatt.ChatterID).Scan(&username, &exp)
+	if err == pgx.ErrNoRows || now > exp {
+		return logClientErr(c, http.StatusUnauthorized, err)
+	} else if err != nil {
+		return logServerErr(c, err)
+	}
+
+	// insert chatt
+	_, err = chatterDB.Exec(background, `INSERT INTO chatts (name, message, id) VALUES ($1, $2, gen_random_uuid())`, username, chatt.Message)
+	if err != nil {
+		return logClientErr(c, http.StatusBadRequest, err)
+	}
+
+	logOk(c)
+	return c.JSON(http.StatusOK, struct{}{})
+
 }
