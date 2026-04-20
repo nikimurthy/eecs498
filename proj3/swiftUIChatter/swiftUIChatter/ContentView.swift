@@ -104,7 +104,7 @@ struct ContentView: View {
         .onTapGesture {
             messageInFocus.toggle()
         }
-        .navigationTitle("llmAction")
+        .navigationTitle("llmAction with HITL")
         .navigationBarTitleDisplayMode(.inline)
         // show error in an alert dialog
         .alert("LLM Error", isPresented: Bindable(vm).showError) {
