@@ -22,7 +22,7 @@ struct SubmitButton: View {
                 if (ChatterID.shared.id == nil) {
                     await withUnsafeContinuation { submitAt in
                         vm.signinCompletion = { () -> Void in
-                            vm.onTrailingEnd = ChatterID.shared.creator
+                            vm.username = ChatterID.shared.creator
                             submitAt.resume()
                         }
                         vm.getSignedin = true

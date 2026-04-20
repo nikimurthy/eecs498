@@ -10,14 +10,16 @@ import SwiftUI
 @Observable
 final class ChattViewModel {
     var onTrailingEnd = "qwen3:0.6b"
+//    var onTrailingEnd = "qwen3.5:9b"
 //    let onTrailingEnd = "gemma3:270m"
 //    let onTrailingEnd = "qwen3:8b"
 //    let onTrailingEnd = "qwen3"
+    var username = "me"
     let appID = Bundle.main.bundleIdentifier
     let sysmsg = ""
     
     let instruction = "Type a message…"
-    var message = "What is the weather at my location?"
+    var message = "List all models available on Ollama"
     
     var errMsg = ""
     var showError = false
@@ -48,7 +50,7 @@ struct swiftUIChatterApp: App {
         Task(priority: .background) { [self] in
             await ChatterID.shared.open(errMsg: Bindable(viewModel).errMsg, showOk: Bindable(viewModel).showOk)
             if !ChatterID.shared.creator.isEmpty {
-                viewModel.onTrailingEnd = ChatterID.shared.creator
+                viewModel.username = ChatterID.shared.creator
             }
         }
     }
